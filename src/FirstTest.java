@@ -1,4 +1,3 @@
-import com.google.common.base.Predicate;
 import io.appium.java_client.AppiumDriver;
 //import io.appium.java_client.PerformsActions;
 import io.appium.java_client.TouchAction;
@@ -10,19 +9,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import javax.lang.model.element.Element;
 import java.net.URL;
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Predicates.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class FirstTest {
@@ -271,6 +266,40 @@ public class FirstTest {
 //
     }
 
+    @Test
+    public void checkTitleOfArticle() {
+        findElementAndClick(
+                By.id("org.wikipedia:id/fragment_onboarding_skip_button"),
+                "Cannot find 'Skip button' input",
+                5
+        );
+
+        findElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5
+        );
+
+        waitElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "java",
+                "Cannot find search input",
+                5
+        );
+        findElementAndClick(
+                By.xpath("//android.view.ViewGroup[@index='1']/android.widget.TextView"),
+                "Cannot find 'java' text",
+                15
+        );
+
+        assertElementPresent(
+                By.xpath("//android.view.View[contains(@text, 'JavaScript')]"),
+                "No results found for the desired title"
+        );
+
+    }
+
+
 
     private WebElement waitForElementPresent(By by, String error_message, long timeout_in_seconds) {
         WebDriverWait wait = new WebDriverWait(driver, timeout_in_seconds) ;
@@ -382,6 +411,18 @@ public class FirstTest {
                 .release()
                 .perform();
 
+
+    }
+    private int getAmountOfElements(By by) {
+        List elements = driver.findElements(by);
+        return elements.size();
+    }
+    private  void assertElementPresent(By by, String error_message) {
+        int amountOfElements = getAmountOfElements(by);
+        if (amountOfElements <= 0) {
+            String default_message = "An element " + by.toString() + " supposed to be presented at the page";
+            throw new AssertionError(default_message + " " + error_message);
+        }
     }
 
 
