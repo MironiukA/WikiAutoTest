@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.ScreenOrientation;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -32,6 +33,7 @@ public class FirstTest {
         capabilities.setCapability("automationName", "Appium");
         capabilities.setCapability("appPackage", "org.wikipedia");
         capabilities.setCapability("appActivity", ".main.MainActivity");
+        capabilities.setCapability("orientation","PORTRAIT");
         capabilities.setCapability("app", "C:/JavaAppiumAutomation/JavaAppiumAutomation/apks/org.wikipedia.apk");
 
         driver = new AndroidDriver(new URL("http://127.0.0.1:4723/wd/hub/"), capabilities);
@@ -50,29 +52,36 @@ public class FirstTest {
         WebElement element_to_skip = driver.findElement(By.xpath("//*[contains(@text, 'SKIP')]"));
         element_to_skip.click();
 
-
         driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        String first_article_name = "Testing framework for web applications";
 
 
-        WebElement element = waitForElementPresent(
+
+        findElementAndClick(
                 By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
                 "Cannot find 'Search Wikipedia' text",
                 5
+
         );
 
-        assertElementHasText(
-                element,
-                "Search Wikipedia"
+        waitElementAndSendKey(
+                By.id("org.wikipedia:id/search_src_text"),
+                "Selenium",
+                "Cannot find Selenium text",
+                15
         );
 
-        int i = driver.findElements(By.xpath("//*[@class = 'android.view.ViewGroup']//*[@resource-id = 'org.wikipedia:id/page_list_item_title'][contains(@text, 'Java')]")).size();
+        findElementAndClick(
+                By.xpath("//*[@resource-id = 'org.wikipedia:id/page_list_item_description'][contains(@text, '"+ first_article_name+"')]"),
+                "Cannot find "+first_article_name+" text",
+                15
 
-
+        );
 
 
     }
-
     @Test
+
 
     public void SearchEx2() {
         WebElement element_to_skip = driver.findElement(By.xpath("//*[contains(@text, 'SKIP')]"));
@@ -266,6 +275,8 @@ public class FirstTest {
 //
     }
 
+
+
     @Test
     public void checkTitleOfArticle() {
         findElementAndClick(
@@ -297,6 +308,156 @@ public class FirstTest {
                 "No results found for the desired title"
         );
 
+    }
+    @Test
+    public void TestAmountOfNotEmptySearch(){
+        findElementAndClick(
+                By.id("org.wikipedia:id/fragment_onboarding_skip_button"),
+                "Cannot find 'Skip button' input",
+                5
+        );
+        findElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5
+        );
+        String search_line = "Linkin Park Discography";
+        waitElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                search_line,
+                "Cannot find 'Linkin Park Discography",
+                5
+        );
+        String search_result_locator = "//android.view.ViewGroup[@index='0']/android.widget.TextView[@text='Linkin Park discography' and @index='0']";
+        waitForElementPresent(
+                By.xpath(search_result_locator),
+                "Cannot find anything by the request" + search_line,
+                15
+        );
+        int amount_of_search_results = getAmountOfElements(
+                By.xpath(search_result_locator)
+        );
+        Assert.assertTrue(
+                "We found a few results",
+                amount_of_search_results > 0
+        );
+    }
+    @Test
+    public void amountOfEmptySearch() {
+        findElementAndClick(
+                By.id("org.wikipedia:id/fragment_onboarding_skip_button"),
+                "Cannot find 'Skip button' input",
+                5
+        );
+        findElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5
+        );
+        String search_line = "liwdqwdawdasdsadasd";
+        waitElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                search_line,
+                "Cannot find 'liwdqwdawdasdsadasd",
+                5
+        );
+        String search_result_locator = "//android.view.ViewGroup[@index='0']/android.widget.TextView[@text='Linkin Park discography' and @index='0']";
+        String empty_result_label = "//*[contains(@text, 'No results')]";
+        waitForElementPresent(
+                By.xpath(empty_result_label),
+                "Cannot find empty result label by the request " + search_line,
+                15
+        );
+        assertElementNotPresent(
+                By.xpath(search_result_locator),
+                "We found some results by request " + search_line
+        );
+    }
+    @Test
+    public void testChangeOrientationScreenInSearchResults(){
+        findElementAndClick(
+                By.id("org.wikipedia:id/fragment_onboarding_skip_button"),
+                "Cannot find 'Skip button' input",
+                5
+        );
+        findElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5
+        );
+        String search_line = "java";
+       waitElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                search_line,
+                "Cannot find search input",
+                5
+        );
+        findElementAndClick(
+                By.xpath("//android.widget.TextView[contains(@text, 'Java (programming language)')]"),
+                "Cannot find 'Java (programming language)' text by " + search_line,
+                15
+        );
+        String title_before_rotation = waitForElementAndGetAttribute(
+                By.xpath("//android.view.View[contains(@text, 'Java (programming language)')]"),
+                "text",
+                "Cannot find the title of article",
+                15
+        );
+        driver.rotate(ScreenOrientation.LANDSCAPE);
+        String title_after_rotation = waitForElementAndGetAttribute(
+                By.xpath("//android.view.View[contains(@text, 'Java (programming language)')]"),
+                "text",
+                "Cannot find the title of article",
+                15
+        );
+        Assert.assertEquals(
+                "Article title has been changed after rotation",
+                title_before_rotation,
+                title_after_rotation
+        );
+        driver.rotate(ScreenOrientation.PORTRAIT);
+        String title_after_second_rotation = waitForElementAndGetAttribute(
+                By.xpath("//android.view.View[contains(@text, 'Java (programming language)')]"),
+                "text",
+                "Cannot find the title of article",
+                15
+        );
+        Assert.assertEquals(
+                "Article title has been changed after rotation",
+                title_before_rotation,
+                title_after_second_rotation
+        );
+    }
+    @Test
+    public void checkArticleTextAfterBackground(){
+        findElementAndClick(
+                By.id("org.wikipedia:id/fragment_onboarding_skip_button"),
+                "Cannot find 'Skip button' input",
+                5
+        );
+        findElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5
+        );
+        String search_line = "java";
+        waitElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                search_line,
+                "Cannot find search input",
+                5
+        );
+        waitForElementPresent(
+                By.xpath("//android.view.ViewGroup[@index='2']/android.widget.TextView[@text='Java (programming language)']"),
+                "Cannot find article in search results",
+                15
+        );
+        driver.runAppInBackground(2);
+        waitForElementPresent(
+                By.xpath("//android.view.ViewGroup[@index='2']/android.widget.TextView[@text='Java (programming language)']"),
+                "Cannot find article in search results after returning from background",
+                15
+        );
     }
 
 
@@ -425,6 +586,17 @@ public class FirstTest {
         }
     }
 
+    private String waitForElementAndGetAttribute(By by, String attribute, String error_message, long timeInSeconds) {
+        WebElement element = waitForElementPresent(by, error_message, timeInSeconds);
+        return element.getAttribute(attribute);
+    }
+    private  void assertElementNotPresent(By by, String error_message) {
+        int amountOfElements = getAmountOfElements(by);
+        if (amountOfElements > 0) {
+            String default_message = "An element " + by.toString() + " supposed to be not present";
+            throw new AssertionError(default_message + " " + error_message);
+        }
+    }
 
 }
 
